@@ -1,9 +1,7 @@
-[![Build Status](https://travis-ci.org/Shden/mercury236.svg?branch=master)](https://travis-ci.org/Shden/mercury236)
-
 # Mercury/Меркурий 236
 Mercury 236 (http://www.incotexcom.ru/m236art.htm) power meter communication utility.
 
-RS485 USB dongle is used to connect to the power meter and to collect grid power measures
+RS485 USB dongle is used to connect to the power meters and to collect grid power measures
 including voltage, current, consumption power, counters, cos(f) etc.
 
 ## License
@@ -14,13 +12,14 @@ You should have received a copy of the GNU Lesser General Public License along w
 
 ## Build and use  
 ```
-git clone https://github.com/Shden/mercury236.git
+git clone https://github.com/ensoelectric/mercury236
 cd mercury236
 make
 
-./mercury236 /dev/ttyS0 --help
-Usage: mercury236 RS485 [OPTIONS] ...
+./mercury236 /dev/ttyS0 10 --help
+Usage: mercury236 RS485 ADDR [OPTIONS] ...
 RS485 address of RS485 dongle (e.g. /dev/ttyUSB0), required
+ADDR power meter net address(e.g. 10), required
 --debug to print extra debug info
 --testRun dry run to see output sample, no hardware required
 Output formatting:
@@ -83,7 +82,3 @@ then try to run with json switch:
                 }
 }
 ```
-
-## See also
-
-Small port for OpenWrt package here - https://github.com/ZigFisher/Glutinium/tree/master/mercury236.

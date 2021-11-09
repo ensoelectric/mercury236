@@ -22,6 +22,8 @@
 // **** Debug output globals
 int debugPrint;
 
+int pmAddress;
+
 // **** Enums
 typedef enum
 {

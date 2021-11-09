@@ -33,6 +33,7 @@
 #define BSZ			255
 
 int debugPrint = 0;
+int pmAddress;
 
 typedef enum
 {
@@ -59,8 +60,9 @@ void getDateTimeStr(char *str, int length, time_t time)
 // -- Command line usage help
 void printUsage()
 {
-	printf("Usage: mercury RS485 [OPTIONS] ...\n\r\n\r");
+	printf("Usage: mercury236 RS485 ADDR [OPTIONS] ...\n\r\n\r");
 	printf("  RS485\t\taddress of RS485 dongle (e.g. /dev/ttyUSB0), required\n\r");
+    printf("  ADDR\tpower meter net address(e.g. 10), required\n\r");
 	printf("  %s\tto print extra debug info\n\r", OPT_DEBUG);
 	printf("  %s\tdry run to see output sample, as if the mains was ON\n\r", OPT_TEST_RUN);
 	printf("  %s\tdry run to get output sample, as if the mains was OFF\n\r", OPT_TEST_FAIL);
@@ -92,11 +94,11 @@ void printOutput(int format, OutputBlock o, int header)
 			printf("  Phase angles (deg):      		%8.2f %8.2f %8.2f\n\r", o.A.p1, o.A.p2, o.A.p3);
 			printf("  Active power (W):        		%8.2f %8.2f %8.2f (%8.2f)\n\r", o.P.p1, o.P.p2, o.P.p3, o.P.sum);
 			printf("  Reactive power (VA):     		%8.2f %8.2f %8.2f (%8.2f)\n\r", o.S.p1, o.S.p2, o.S.p3, o.S.sum);
-			printf("  Total consumed, all tariffs (KW):	%8.2f\n\r", o.PR.ap);
-			printf("    including day tariff (KW):		%8.2f\n\r", o.PRT[0].ap);
-			printf("    including night tariff (KW):	%8.2f\n\r", o.PRT[1].ap);
-			printf("  Yesterday consumed (KW): 		%8.2f\n\r", o.PY.ap);
-			printf("  Today consumed (KW):     		%8.2f\n\r", o.PT.ap);
+			printf("  Total consumed, all tariffs (KWh):	%8.2f\n\r", o.PR.ap);
+			printf("    including day tariff (KWh):		%8.2f\n\r", o.PRT[0].ap);
+			printf("    including night tariff (KWh):	%8.2f\n\r", o.PRT[1].ap);
+			printf("  Yesterday consumed (KWh): 		%8.2f\n\r", o.PY.ap);
+			printf("  Today consumed (KWh):     		%8.2f\n\r", o.PT.ap);
 			break;
 
 		case OF_CSV:
@@ -146,10 +148,18 @@ void printOutput(int format, OutputBlock o, int header)
 
 int main(int argc, const char** args)
 {
-	// must have RS485 address (1st required param)
+	// must have RS485 device (1st required param)
 	if (argc < 2)
 	{
 		printf("Error: no RS485 device specified\n\r\n\r");
+		printUsage();
+		exit(EXIT_FAIL);
+	}
+    
+    // must have power meter address (2st required param)
+	if (argc < 3)
+	{
+		printf("Error: no power meter address specified\n\r\n\r");
 		printUsage();
 		exit(EXIT_FAIL);
 	}
@@ -159,8 +169,9 @@ int main(int argc, const char** args)
 
 	char dev[BSZ];
 	strncpy(dev, args[1], BSZ);
+    pmAddress = atoi(args[2]); // get power meter address
 
-	for (int i=2; i<argc; i++)
+	for (int i=3; i<argc; i++)
 	{
 		if (!strcmp(OPT_DEBUG, args[i]))
 			debugPrint = 1;
@@ -225,17 +236,11 @@ int main(int argc, const char** args)
 		cfsetispeed(&serialPortSettings, BAUDRATE);
 		cfsetospeed(&serialPortSettings, BAUDRATE);
 
-		serialPortSettings.c_cflag &= PARENB;				/* Disables the Parity Enable bit(PARENB),So No Parity   */
-		serialPortSettings.c_cflag &= ~CSTOPB;				/* CSTOPB = 2 Stop bits,here it is cleared so 1 Stop bit */
-		serialPortSettings.c_cflag &= ~CSIZE;				/* Clears the mask for setting the data size             */
-		serialPortSettings.c_cflag |=  CS8;				/* Set the data bits = 8                                 */
+		serialPortSettings.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
 
-		serialPortSettings.c_cflag |= CREAD | CLOCAL;			/* Enable receiver,Ignore Modem Control lines       */ 
+		serialPortSettings.c_iflag = IGNPAR;
 
-		serialPortSettings.c_iflag &= ~(IXON | IXOFF | IXANY);		/* Disable XON/XOFF flow control both i/p and o/p */
-		serialPortSettings.c_iflag &= ~(ICANON | ECHO | ECHOE | ISIG);	/* Non Cannonical mode                            */
-
-		serialPortSettings.c_oflag &= ~OPOST;				/* No Output Processing */
+		serialPortSettings.c_oflag = 0;
 
 		tcflush(fd, TCIOFLUSH);
 		tcsetattr(fd, TCSANOW, &serialPortSettings);

@@ -5,10 +5,10 @@
 
 #pragma pack(push, 1)
 
-#define BAUDRATE 		B57600
-#define TIME_OUT		2 * 1000	// Mercury inter-command delay (ms)
-#define CH_TIME_OUT		1		// Channel timeout (sec)
-#define PM_ADDRESS		0		// RS485 addess of the power meter
+#define BAUDRATE 		B9600
+#define TIME_OUT		50	// Mercury inter-command delay (ms)
+#define CH_TIME_OUT		10		// Channel timeout (sec)
+#define PM_ADDRESS		pmAddress		// RS485 addess of the power meter
 
 #define UInt16			uint16_t
 #define byte			unsigned char
